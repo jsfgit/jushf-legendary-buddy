@@ -57,6 +57,8 @@ chmod +x start.sh
 
 ## 📋 Pet Gallery
 
+![Pet Gallery](assets/buddy-species.png)
+
 ### 18 Species
 
 | English | Chinese | English | Chinese |

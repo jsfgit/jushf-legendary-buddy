@@ -57,6 +57,8 @@ chmod +x start.sh
 
 ## 📋 宠物图鉴
 
+![宠物图鉴](assets/buddy-species.png)
+
 ### 18 种物种
 
 | 英文名 | 中文名 | 英文名 | 中文名 |
