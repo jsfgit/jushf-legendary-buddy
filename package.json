@@ -1,0 +1,28 @@
+{
+  "name": "jushf-legendary-buddy",
+  "version": "1.1.0",
+  "description": "Claude Code Buddy 宠物刷取工具（跨平台）",
+  "type": "commonjs",
+  "scripts": {
+    "gallery": "node scripts/buddy-interactive.js --gallery",
+    "reroll": "bun scripts/buddy-reroll.js",
+    "interactive": "bun scripts/buddy-interactive.js",
+    "helper:win": "powershell -ExecutionPolicy Bypass -File scripts/buddy-helper.ps1",
+    "helper:unix": "bash scripts/buddy-helper.sh"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "buddy",
+    "宠物",
+    "reroll",
+    "跨平台"
+  ],
+  "author": "少飞",
+  "license": "MIT",
+  "platforms": [
+    "windows",
+    "macos",
+    "linux"
+  ]
+}
