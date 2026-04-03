@@ -198,10 +198,34 @@ switch ($Action) {
         
         if ($uuid) {
             if (Test-Path $claudeJsonPath) {
+                # 备份现有配置
+                $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+                $backupPath = "$claudeJsonPath.backup.$timestamp"
+                Copy-Item $claudeJsonPath $backupPath
+                Write-Color "💾 已备份原配置：$backupPath" "Yellow"
+                
+                # 写入新配置（同时修改 userID 和 accountUuid）
                 $config = Get-Content $claudeJsonPath -Raw | ConvertFrom-Json
+                $oldUserId = $config.userID
+                $oldUuid = $config.accountUuid
+                
+                # Buddy 系统用 userID 做种子，必须同时修改
+                $config.userID = $uuid
                 $config.accountUuid = $uuid
-                $config | ConvertTo-Json | Set-Content -Path $claudeJsonPath
-                Write-Color "✅ userID 已写入：$uuid" "Green"
+                
+                # 清除缓存的宠物数据，强制重新生成
+                if ($config.companion) {
+                    Write-Color "🗑️  清除缓存的宠物数据 (companion)" "Yellow"
+                    $config.PSObject.Properties.Remove('companion')
+                }
+                
+                $config | ConvertTo-Json -Depth 10 | Set-Content -Path $claudeJsonPath
+                Write-Color "✅ userID + accountUuid 已写入：$uuid" "Green"
+                Write-Color "   原 userID:      $oldUserId" "Gray"
+                Write-Color "   原 accountUuid: $oldUuid" "Gray"
+                Write-Host ""
+                Write-Host "💡 如需恢复，运行："
+                Write-Host "  Copy-Item '$backupPath' '$claudeJsonPath' -Force"
             } else {
                 $config = @{
                     hasCompletedOnboarding = $true

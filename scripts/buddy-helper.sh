@@ -193,25 +193,40 @@ action_write_uuid() {
     
     if [[ -n "$uuid" ]]; then
         if [[ -f "$claude_json" ]]; then
-            # 使用 sed 或 node 更新 JSON
+            # 备份现有配置
+            local timestamp=$(date +%Y%m%d-%H%M%S)
+            local backup_path="$claude_json.backup.$timestamp"
+            cp "$claude_json" "$backup_path"
+            print_color "💾 已备份原配置：$backup_path" "$YELLOW"
+            
+            # 使用 node 更新 JSON（同时修改 userID 和 accountUuid）
             if command -v node &> /dev/null; then
                 node -e "
                     const fs = require('fs');
                     const config = JSON.parse(fs.readFileSync('$claude_json', 'utf8'));
-                    config.accountUuid = '$uuid';
+                    const oldUserId = config.userID || 'N/A';
+                    const oldUuid = config.accountUuid || 'N/A';
+                    
                     config.userID = '$uuid';
+                    config.accountUuid = '$uuid';
+                    
+                    // 清除缓存的宠物数据，强制重新生成
+                    if (config.companion) {
+                        console.log('🗑️  清除缓存的宠物数据 (companion)');
+                        delete config.companion;
+                    }
+                    
                     fs.writeFileSync('$claude_json', JSON.stringify(config, null, 2));
+                    console.log('✅ userID + accountUuid 已写入：$uuid');
+                    console.log('   原 userID:      ' + oldUserId);
+                    console.log('   原 accountUuid: ' + oldUuid);
+                    console.log('');
+                    console.log('💡 如需恢复，运行：');
+                    console.log('  cp \\''$backup_path'\\' \\'$claude_json\\' -f');
                 "
-                print_color "✅ userID 已写入：$uuid" "$GREEN"
             else
-                # 简单替换（可能不完美）
-                if grep -q "accountUuid" "$claude_json"; then
-                    sed -i.bak "s/\"accountUuid\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"accountUuid\": \"$uuid\"/" "$claude_json"
-                else
-                    # 添加字段
-                    sed -i.bak "s/}$/,\n  \"accountUuid\": \"$uuid\"\n}/" "$claude_json"
-                fi
-                print_color "✅ userID 已写入：$uuid" "$GREEN"
+                print_color "❌ 错误：需要 Node.js 来处理 JSON" "$RED"
+                exit 1
             fi
         else
             cat > "$claude_json" << EOF
