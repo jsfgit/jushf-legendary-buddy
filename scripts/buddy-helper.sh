@@ -186,6 +186,9 @@ EOF
 # 写入 UUID
 action_write_uuid() {
     print_color "✍️  写入 userID 到配置文件" "$CYAN"
+    print_color "⚠️  重要：同时修改 userID + accountUuid" "$YELLOW"
+    print_color "   只改 accountUuid 不生效（Buddy 用 userID 做种子）" "$GRAY"
+    print_color "   不影响 Claude 订阅/登录状态" "$GRAY"
     echo ""
     
     local claude_json="$HOME/.claude.json"
@@ -217,7 +220,10 @@ action_write_uuid() {
                     }
                     
                     fs.writeFileSync('$claude_json', JSON.stringify(config, null, 2));
-                    console.log('✅ userID + accountUuid 已写入：$uuid');
+                    console.log('');
+                    console.log('✅ 配置已更新');
+                    console.log('   新 userID:      $uuid');
+                    console.log('   新 accountUuid: $uuid');
                     console.log('   原 userID:      ' + oldUserId);
                     console.log('   原 accountUuid: ' + oldUuid);
                     console.log('');
