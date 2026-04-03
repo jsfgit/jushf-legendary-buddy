@@ -226,6 +226,8 @@ switch ($Action) {
                 Write-Host ""
                 Write-Host "💡 如需恢复，运行："
                 Write-Host "  Copy-Item '$backupPath' '$claudeJsonPath' -Force"
+                Write-Host ""
+                Read-Host "按回车键退出"
             } else {
                 $config = @{
                     hasCompletedOnboarding = $true
@@ -234,6 +236,8 @@ switch ($Action) {
                 } | ConvertTo-Json
                 Set-Content -Path $claudeJsonPath -Value $config
                 Write-Color "✅ 配置已创建并写入 userID: $uuid" "Green"
+                Write-Host ""
+                Read-Host "按回车键退出"
             }
         }
     }

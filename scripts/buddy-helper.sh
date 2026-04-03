@@ -230,6 +230,8 @@ action_write_uuid() {
                     console.log('💡 如需恢复，运行：');
                     console.log('  cp \\''$backup_path'\\' \\'$claude_json\\' -f');
                 "
+                echo ""
+                read -p "按回车键退出"
             else
                 print_color "❌ 错误：需要 Node.js 来处理 JSON" "$RED"
                 exit 1
@@ -244,6 +246,8 @@ action_write_uuid() {
 }
 EOF
             print_color "✅ 配置已创建并写入 userID: $uuid" "$GREEN"
+            echo ""
+            read -p "按回车键退出"
         fi
     fi
 }
