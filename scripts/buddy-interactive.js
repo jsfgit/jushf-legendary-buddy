@@ -132,6 +132,8 @@ if (args.includes('--gallery') || args.includes('-g')) {
   console.log('   bun buddy-interactive.js dragon legendary 80');
   console.log('   bun buddy-interactive.js duck legendary 90 --shiny');
   console.log('');
+  console.log('💡 提示：使用启动工具更简单 (双击 启动工具.ps1)');
+  console.log('');
   process.exit(0);
 }
 
@@ -160,13 +162,13 @@ if (!RARITIES.includes(rarity)) {
   process.exit(1);
 }
 
-// 开始搜索
-console.log(`\n🎯 搜索目标：${RARITY_CN[rarity]} ${SPECIES_CN[species]} (${species})`);
+// 开始寻找
+console.log(`\n🎯 寻找目标：${RARITY_CN[rarity]} ${SPECIES_CN[species]} (${species})`);
 console.log(`   最小属性：${minStats}`);
 console.log(`   闪光要求：${shiny ? '是 ✨' : '否'}`);
 console.log(`   查找数量：${count}`);
 console.log('');
-console.log('开始搜索...\n');
+console.log('开始寻找...\n');
 
 const minRarityRank = RARITY_RANK[rarity];
 let found = 0;
@@ -204,7 +206,7 @@ for (let i = 0; i < 50_000_000; i++) {
   
   // 进度显示
   if ((i + 1) % 1_000_000 === 0) {
-    process.stdout.write(`\r🔍 已搜索 ${((i + 1) / 1_000_000).toFixed(1)}M 次...`);
+    process.stdout.write(`\r🔍 已寻找 ${((i + 1) / 1_000_000).toFixed(1)}M 次...`);
   }
 }
 
@@ -214,7 +216,7 @@ if (found === 0) {
   console.log(`\n❌ 未找到匹配结果 (${elapsed}s)`);
   console.log(`💡 提示：尝试降低 --min-stats 值或放宽其他条件\n`);
 } else {
-  console.log(`\n🎉 搜索完成！找到 ${found} 个匹配结果，耗时 ${elapsed}s\n`);
+  console.log(`\n🎉 寻找完成！找到 ${found} 个匹配结果，耗时 ${elapsed}s\n`);
   console.log('📝 下一步操作:');
   console.log('   1. 复制上面的 userID');
   console.log('   2. 写入 ~/.claude.json 的 accountUuid 字段');
