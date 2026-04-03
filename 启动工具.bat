@@ -8,8 +8,9 @@ echo.
 echo 1. 显示宠物图鉴
 echo 2. 刷传奇宠物 (交互模式)
 echo 3. 检测环境
+echo 4. 写入 userID (修复宠物不生效)
 echo.
-set /p choice="请输入选项 (1-3): "
+set /p choice="请输入选项 (1-4): "
 
 if "%choice%"=="1" (
     bun scripts/buddy-interactive.js --gallery
@@ -19,6 +20,8 @@ if "%choice%"=="1" (
     bun scripts/buddy-interactive.js %species% legendary 80
 ) else if "%choice%"=="3" (
     powershell -ExecutionPolicy Bypass -File scripts/buddy-helper.ps1 -Action detect
+) else if "%choice%"=="4" (
+    powershell -ExecutionPolicy Bypass -File scripts/buddy-helper.ps1 -Action write-uuid
 ) else (
     echo 无效选项
 )
