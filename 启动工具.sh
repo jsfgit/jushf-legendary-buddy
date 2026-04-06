@@ -16,20 +16,10 @@ print_color() {
     echo -e "${2}${1}${NC}"
 }
 
-# 宠物图鉴数据
-declare -A PET_EN=(
-    [1]="duck" [2]="goose" [3]="blob" [4]="cat" [5]="dragon" [6]="octopus"
-    [7]="owl" [8]="penguin" [9]="turtle" [10]="snail" [11]="ghost"
-    [12]="axolotl" [13]="capybara" [14]="cactus" [15]="robot" [16]="rabbit"
-    [17]="mushroom" [18]="chonk"
-)
-
-declare -A PET_CN=(
-    [1]="鸭子" [2]="鹅" [3]="史莱姆" [4]="猫" [5]="龙" [6]="章鱼"
-    [7]="猫头鹰" [8]="企鹅" [9]="乌龟" [10]="蜗牛" [11]="幽灵"
-    [12]="蝾螈" [13]="水豚" [14]="仙人掌" [15]="机器人" [16]="兔子"
-    [17]="蘑菇" [18]="胖猫"
-)
+# 宠物图鉴数据（兼容 bash 3.2，不用 declare -A）
+# 使用数组 + 索引映射
+PET_EN=("" "duck" "goose" "blob" "cat" "dragon" "octopus" "owl" "penguin" "turtle" "snail" "ghost" "axolotl" "capybara" "cactus" "robot" "rabbit" "mushroom" "chonk")
+PET_CN=("" "鸭子" "鹅" "史莱姆" "猫" "龙" "章鱼" "猫头鹰" "企鹅" "乌龟" "蜗牛" "幽灵" "蝾螈" "水豚" "仙人掌" "机器人" "兔子" "蘑菇" "胖猫")
 
 # 显示宠物图鉴
 show_pet_gallery() {
