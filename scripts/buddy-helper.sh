@@ -192,7 +192,12 @@ action_write_uuid() {
     echo ""
     
     local claude_json="$HOME/.claude.json"
-    read -p "粘贴 userID: " uuid
+    local uuid="$UUID"
+    
+    # 如果没有通过 --uuid 参数提供，则交互式输入
+    if [[ -z "$uuid" ]]; then
+        read -p "粘贴 userID: " uuid
+    fi
     
     if [[ -n "$uuid" ]]; then
         if [[ -f "$claude_json" ]]; then
@@ -204,11 +209,13 @@ action_write_uuid() {
             
             # 使用 node 更新 JSON（同时修改 userID 和 accountUuid）
             if command -v node &> /dev/null; then
-                node - "$claude_json" "$uuid" "$backup_path" << 'NODESCRIPT'
+                # 创建临时 node 脚本（避免 heredoc 在某些终端不兼容）
+                local temp_script=$(mktemp /tmp/buddy-write-uuid.XXXXXX.js)
+                cat > "$temp_script" << 'NODESCRIPT'
 const fs = require('fs');
-const claudeJson = process.argv[1];
-const uuid = process.argv[2];
-const backupPath = process.argv[3];
+const claudeJson = process.argv[2];
+const uuid = process.argv[3];
+const backupPath = process.argv[4];
 
 const config = JSON.parse(fs.readFileSync(claudeJson, 'utf8'));
 const oldUserId = config.userID || 'N/A';
@@ -234,6 +241,8 @@ console.log('');
 console.log('💡 如需恢复，运行：');
 console.log('  cp ' + backupPath + ' ' + claudeJson + ' -f');
 NODESCRIPT
+                node "$temp_script" "$claude_json" "$uuid" "$backup_path"
+                rm -f "$temp_script"
                 echo ""
                 read -p "按回车键退出"
             else
@@ -268,13 +277,14 @@ show_help() {
     echo "  -r, --rarity <name>     稀有度"
     echo "  -m, --min-stats <val>   最小属性"
     echo "  --shiny                 要求闪光"
+    echo "  --uuid <id>             userID (用于 write-uuid 操作)"
     echo "  -h, --help              显示帮助"
     echo ""
     echo "示例:"
     echo "  $0 -a detect"
     echo "  $0 -a reroll -s dragon -r legendary -m 80"
     echo "  $0 -a oauth-setup"
-    echo "  $0 -a write-uuid"
+    echo "  $0 -a write-uuid --uuid <your-userID>"
 }
 
 # 解析参数
@@ -283,6 +293,7 @@ SPECIES=""
 RARITY=""
 MIN_STATS=""
 SHINY="false"
+UUID=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -305,6 +316,10 @@ while [[ $# -gt 0 ]]; do
         --shiny)
             SHINY="true"
             shift
+            ;;
+        --uuid)
+            UUID="$2"
+            shift 2
             ;;
         -h|--help)
             show_help
