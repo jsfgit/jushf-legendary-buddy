@@ -204,32 +204,36 @@ action_write_uuid() {
             
             # 使用 node 更新 JSON（同时修改 userID 和 accountUuid）
             if command -v node &> /dev/null; then
-                node -e "
-                    const fs = require('fs');
-                    const config = JSON.parse(fs.readFileSync('$claude_json', 'utf8'));
-                    const oldUserId = config.userID || 'N/A';
-                    const oldUuid = config.accountUuid || 'N/A';
-                    
-                    config.userID = '$uuid';
-                    config.accountUuid = '$uuid';
-                    
-                    // 清除缓存的宠物数据，强制重新生成
-                    if (config.companion) {
-                        console.log('🗑️  清除缓存的宠物数据 (companion)');
-                        delete config.companion;
-                    }
-                    
-                    fs.writeFileSync('$claude_json', JSON.stringify(config, null, 2));
-                    console.log('');
-                    console.log('✅ 配置已更新');
-                    console.log('   新 userID:      $uuid');
-                    console.log('   新 accountUuid: $uuid');
-                    console.log('   原 userID:      ' + oldUserId);
-                    console.log('   原 accountUuid: ' + oldUuid);
-                    console.log('');
-                    console.log('💡 如需恢复，运行：');
-                    console.log('  cp \\''$backup_path'\\' \\'$claude_json\\' -f');
-                "
+                node - "$claude_json" "$uuid" "$backup_path" << 'NODESCRIPT'
+const fs = require('fs');
+const claudeJson = process.argv[1];
+const uuid = process.argv[2];
+const backupPath = process.argv[3];
+
+const config = JSON.parse(fs.readFileSync(claudeJson, 'utf8'));
+const oldUserId = config.userID || 'N/A';
+const oldUuid = config.accountUuid || 'N/A';
+
+config.userID = uuid;
+config.accountUuid = uuid;
+
+// 清除缓存的宠物数据，强制重新生成
+if (config.companion) {
+    console.log('🗑️  清除缓存的宠物数据 (companion)');
+    delete config.companion;
+}
+
+fs.writeFileSync(claudeJson, JSON.stringify(config, null, 2));
+console.log('');
+console.log('✅ 配置已更新');
+console.log('   新 userID:      ' + uuid);
+console.log('   新 accountUuid: ' + uuid);
+console.log('   原 userID:      ' + oldUserId);
+console.log('   原 accountUuid: ' + oldUuid);
+console.log('');
+console.log('💡 如需恢复，运行：');
+console.log('  cp ' + backupPath + ' ' + claudeJson + ' -f');
+NODESCRIPT
                 echo ""
                 read -p "按回车键退出"
             else

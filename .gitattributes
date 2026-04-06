@@ -1,0 +1,8 @@
+# Shell scripts should be executable
+scripts/*.sh text eol=lf executable
+*.sh text eol=lf executable
+
+# Ensure consistent line endings for scripts
+scripts/buddy-helper.sh text eol=lf
+scripts/buddy-interactive.js text eol=lf
+scripts/buddy-reroll.js text eol=lf
