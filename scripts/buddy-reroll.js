@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // buddy-reroll.js
-// Claude Code Buddy 宠物刷取脚本 - 支持 Node.js 和 Bun
-// Bun.hash 结果与 Claude Code 实际匹配；Node.js (FNV-1a) 不匹配
+// Claude Code Buddy 宠物刷取脚本
+// 使用 FNV-1a 哈希算法（与 Claude Code 源码一致）
 
 const crypto = require('crypto');
 
@@ -21,18 +21,19 @@ const STAT_NAMES = ['DEBUGGING', 'PATIENCE', 'CHAOS', 'WISDOM', 'SNARK'];
 const RARITY_FLOOR = { common: 5, uncommon: 15, rare: 25, epic: 35, legendary: 50 };
 
 // === 哈希函数 ===
+// FNV-1a - Claude Code 实际使用的哈希算法（所有平台）
+// 参考：https://claudefa.st/blog/guide/mechanics/claude-buddy
 function hashFNV1a(s) {
-  let h = 2166136261;
+  let h = 2166136261; // FNV offset basis
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+    h = Math.imul(h, 16777619); // FNV prime
   }
-  return h >>> 0;
+  return h >>> 0; // Ensure unsigned 32-bit
 }
 
-function hashBun(s) {
-  return Number(BigInt(Bun.hash(s)) & 0xffffffffn);
-}
+// Bun.hash() - 已废弃，不匹配 Claude Code 实际算法
+// function hashBun(s) { ... }
 
 // === PRNG (Mulberry32 - 与 Claude Code 一致) ===
 function mulberry32(seed) {
@@ -111,6 +112,7 @@ function parseArgs() {
       case '--max': opts.max = parseInt(args[++i]); break;
       case '--count': opts.count = parseInt(args[++i]); break;
       case '--check': opts.check = args[++i]; break;
+      case '--verify': opts.verify = true; break;  // 验证当前 ~/.claude.json 的宠物
       case '--json': opts.json = true; break;
       case '--help': case '-h':
         printHelp();
@@ -161,6 +163,7 @@ function printHelp() {
   --max <number>     最大迭代次数 (默认：50000000)
   --count <number>   查找结果数量 (默认：3)
   --check <uid>      检查特定 userID 生成什么宠物
+  --verify           验证当前 ~/.claude.json 配置的宠物
   --json             输出 JSON 格式（便于程序调用）
   --help, -h         显示帮助
 
@@ -175,10 +178,11 @@ function printHelp() {
 
 // === 主程序 ===
 const opts = parseArgs();
-const isBun = typeof Bun !== 'undefined';
-const hashFn = isBun ? hashBun : hashFNV1a;
+// Claude Code 实际使用 FNV-1a 哈希算法，不是 Bun.hash()
+// 参考：https://claudefa.st/blog/guide/mechanics/claude-buddy
+const hashFn = hashFNV1a;
 const rollFull = createRoller(hashFn);
-const runtimeLabel = isBun ? 'Bun (Bun.hash) ✅' : 'Node.js (FNV-1a) ❌';
+const runtimeLabel = 'FNV-1a ✅ (与 Claude Code 一致)';
 
 const RARITY_STARS = {
   common: '★',
@@ -203,10 +207,61 @@ const SPECIES_CN = {
   cactus: '仙人掌', robot: '机器人', rabbit: '兔子', mushroom: '蘑菇', chonk: '胖猫'
 };
 
+// 验证当前配置模式
+if (opts.verify) {
+  const fs = require('fs');
+  const os = require('os');
+  const claudeConfigPath = os.homedir() + '/.claude.json';
+  
+  if (!fs.existsSync(claudeConfigPath)) {
+    console.log(`❌ 未找到 Claude 配置文件：${claudeConfigPath}`);
+    process.exit(1);
+  }
+  
+  const config = JSON.parse(fs.readFileSync(claudeConfigPath, 'utf-8'));
+  const accountUuid = config.accountUuid || config.userID;
+  
+  if (!accountUuid) {
+    console.log(`❌ 配置文件中未找到 accountUuid 或 userID`);
+    process.exit(1);
+  }
+  
+  console.log(`🎮 Claude Code Buddy 验证当前配置`);
+  console.log(`运行环境：${runtimeLabel}`);
+  console.log(`配置文件：${claudeConfigPath}`);
+  console.log(`accountUuid: ${accountUuid}\n`);
+  
+  const r = rollFull(accountUuid);
+  
+  if (opts.json) {
+    console.log(JSON.stringify({ accountUuid, ...r }, null, 2));
+  } else {
+    console.log(`✅ 当前配置的宠物：`);
+    console.log(`  物种  : ${SPECIES_CN[r.species] || r.species} (${r.species})`);
+    console.log(`  稀有度：${RARITY_CN[r.rarity]} ${RARITY_STARS[r.rarity]}`);
+    console.log(`  眼睛  : ${r.eye}`);
+    console.log(`  帽子  : ${r.hat === 'none' ? '无' : r.hat}`);
+    console.log(`  闪光  : ${r.shiny ? '✨ 是' : '否'}`);
+    console.log(`  属性  :`);
+    for (const name of STAT_NAMES) {
+      const val = r.stats[name];
+      const bar = '█'.repeat(Math.floor(val / 5)) + '░'.repeat(20 - Math.floor(val / 5));
+      console.log(`    ${name.padEnd(10)} ${bar} ${val}`);
+    }
+    console.log(`\n💡 提示：在 Claude Code 中输入 /buddy 查看实际宠物，对比是否一致`);
+  }
+  process.exit(0);
+}
+
 // 检查模式
 if (opts.check) {
   if (!opts.json) {
+    console.log(`🎮 Claude Code Buddy 验证工具`);
     console.log(`运行环境：${runtimeLabel}`);
+    if (!isBun) {
+      console.log(`⚠️  警告：Node.js 模式结果可能与 Claude Code 不匹配！`);
+      console.log(`💡 提示：请使用 Bun 运行以获得准确结果：bun scripts/buddy-reroll.js --check ${opts.check}`);
+    }
     console.log(`检查 userID: ${opts.check}\n`);
   }
   
@@ -242,11 +297,7 @@ if (opts.minStatsVal) filters.push(`全属性≥${opts.minStatsVal}`);
 if (!opts.json) {
   console.log(`🎮 Claude Code Buddy 刷宠物工具`);
   console.log(`运行环境：${runtimeLabel}`);
-  if (!isBun) {
-    console.log(`⚠️  警告：Node.js 模式结果不与 Claude Code 匹配，请使用 Bun 运行！\n`);
-  } else {
-    console.log('');
-  }
+  console.log('');
   console.log(`搜索条件：${filters.join(', ') || '任意'} (最多 ${opts.max.toLocaleString()}, 查找 ${opts.count} 个)`);
   console.log('');
 }

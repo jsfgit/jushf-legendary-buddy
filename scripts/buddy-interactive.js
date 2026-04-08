@@ -37,9 +37,15 @@ const RARITY_STARS = {
   common: '★', uncommon: '★★', rare: '★★★', epic: '★★★★', legendary: '★★★★★'
 };
 
-// === 哈希函数 ===
-function hashBun(s) {
-  return Number(BigInt(Bun.hash(s)) & 0xffffffffn);
+// === 哈希函数 (FNV-1a 32-bit) ===
+// Claude Code 实际使用 FNV-1a，不是 Bun.hash()
+function fnv1a(str) {
+  let hash = 2166136261; // FNV offset basis
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619); // FNV prime
+  }
+  return hash >>> 0; // Ensure unsigned 32-bit
 }
 
 function mulberry32(seed) {
@@ -86,7 +92,7 @@ function rollStats(rng, rarity) {
 }
 
 function rollFull(uid) {
-  const rng = mulberry32(hashBun(uid + SALT));
+  const rng = mulberry32(fnv1a(uid + SALT));
   const rarity = rollRarity(rng);
   const species = pick(rng, SPECIES);
   const eye = pick(rng, EYES);
